@@ -1,0 +1,135 @@
+{
+  "entities": {
+    "AdvisorApplication": {
+      "title": "Advisor Application",
+      "description": "Information provided by a user applying to become an advisor.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "fullName": { "type": "string" },
+        "specialty": { "type": "string" },
+        "bio": { "type": "string" },
+        "socialLinks": { "type": "object" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "declined"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "fullName", "status"]
+    },
+    "Advisor": {
+      "title": "Advisor",
+      "description": "An approved travel advisor.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "fullName": { "type": "string" },
+        "specialty": { "type": "string" },
+        "bio": { "type": "string" },
+        "profileImage": { "type": "string" },
+        "socialLinks": { "type": "object" },
+        "visibility": {
+          "type": "object",
+          "properties": {
+            "savedTrips": { "type": "boolean" },
+            "upcomingPlans": { "type": "boolean" },
+            "bucketList": { "type": "boolean" }
+          }
+        },
+        "followers": { "type": "number" },
+        "likes": { "type": "number" }
+      },
+      "required": ["uid", "email", "fullName"]
+    },
+    "Trip": {
+      "title": "Trip",
+      "description": "A travel trip created by an advisor.",
+      "type": "object",
+      "properties": {
+        "advisorId": { "type": "string" },
+        "title": { "type": "string" },
+        "location": { "type": "string" },
+        "image": { "type": "string" },
+        "transport": { "type": "object" },
+        "hotel": { "type": "object" },
+        "activities": { "type": "array" },
+        "socialLinks": { "type": "object" },
+        "type": { "type": "string", "enum": ["saved", "upcoming", "bucket"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["advisorId", "title", "type"]
+    },
+    "TripApplication": {
+      "title": "Trip Application",
+      "description": "A trip application submitted by an advisor for review.",
+      "type": "object",
+      "properties": {
+        "advisorId": { "type": "string" },
+        "advisorName": { "type": "string" },
+        "title": { "type": "string" },
+        "destination": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "string" },
+        "duration": { "type": "string" },
+        "naturePics": { "type": "array", "items": { "type": "string" } },
+        "transport": {
+          "type": "object",
+          "properties": {
+            "going": { "type": "string" },
+            "comingBack": { "type": "string" },
+            "slipUrl": { "type": "string" },
+            "link": { "type": "string" }
+          }
+        },
+        "hotel": {
+          "type": "object",
+          "properties": {
+            "interiorPics": { "type": "array", "items": { "type": "string" } },
+            "exteriorPics": { "type": "array", "items": { "type": "string" } },
+            "link": { "type": "string" }
+          }
+        },
+        "activities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "pics": { "type": "array", "items": { "type": "string" } },
+              "charges": { "type": "string" }
+            }
+          }
+        },
+        "dressLinks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "pics": { "type": "array", "items": { "type": "string" } },
+              "link": { "type": "string" }
+            }
+          }
+        },
+        "status": { "type": "string", "enum": ["pending", "accepted", "declined"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["advisorId", "title", "destination", "status"]
+    }
+  },
+  "firestore": {
+    "/applications/{applicationId}": {
+      "schema": "AdvisorApplication",
+      "description": "Collection of advisor applications."
+    },
+    "/advisors/{advisorId}": {
+      "schema": "Advisor",
+      "description": "Collection of approved advisors."
+    },
+    "/trips/{tripId}": {
+      "schema": "Trip",
+      "description": "Collection of trips created by advisors."
+    },
+    "/tripApplications/{tripApplicationId}": {
+      "schema": "TripApplication",
+      "description": "Applications for new trips submitted by advisors for review."
+    }
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "name": "TravelVibe",
+  "description": "Discover and curate budget-friendly trips with detailed itineraries and shoppable travel essentials.",
+  "requestFramePermissions": ["geolocation"]
+}

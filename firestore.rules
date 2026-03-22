@@ -1,0 +1,127 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: applications
+    // Document ID: auto-generated
+    // Fields:
+    //   - email: string (required, email format)
+    //   - fullName: string (required)
+    //   - specialty: string
+    //   - bio: string
+    //   - socialLinks: map
+    //   - status: string (required, enum: ["pending", "accepted", "declined"])
+    //   - createdAt: timestamp
+    //
+    // Collection: advisors
+    // Document ID: advisor UID
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required, email format)
+    //   - fullName: string (required)
+    //   - specialty: string
+    //   - bio: string
+    //   - profileImage: string
+    //   - socialLinks: map
+    //   - visibility: map (savedTrips: bool, upcomingPlans: bool, bucketList: bool)
+    //   - followers: number
+    //   - likes: number
+    //
+    // Collection: trips
+    // Document ID: auto-generated
+    // Fields:
+    //   - advisorId: string (required)
+    //   - title: string (required)
+    //   - location: string
+    //   - image: string
+    //   - transport: map
+    //   - hotel: map
+    //   - activities: list
+    //   - socialLinks: map
+    //   - type: string (required, enum: ["saved", "upcoming", "bucket"])
+    //   - createdAt: timestamp
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "uzmabagavan2906@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    // Applications Collection
+    match /applications/{applicationId} {
+      // Anyone can create an application
+      allow create: if true; // In a real app, we might want to limit this to authenticated users or add rate limiting
+      
+      // Only admin can read or update applications
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Advisors Collection
+    match /advisors/{advisorId} {
+      // Anyone can read approved advisor profiles
+      allow read: if true;
+      
+      // Only the advisor or admin can update their profile
+      allow update: if isOwner(advisorId) || isAdmin();
+      
+      // Only admin can create or delete advisor documents
+      allow create, delete: if isAdmin();
+    }
+
+    // Trips Collection
+    match /trips/{tripId} {
+      // Anyone can read trips
+      allow read: if true;
+      
+      // Only the advisor who owns the trip or admin can create, update, or delete
+      allow create: if isAuthenticated() && request.resource.data.advisorId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && (resource.data.advisorId == request.auth.uid || isAdmin());
+    }
+
+    // Trip Applications Collection
+    match /tripApplications/{applicationId} {
+      // Any authenticated advisor can create a trip application
+      allow create: if isAuthenticated();
+      
+      // Only the advisor who created the application or admin can read it
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.advisorId || isAdmin());
+      
+      // Only admin can update or delete trip applications
+      allow update, delete: if isAdmin();
+    }
+
+    // Users Collection (for roles)
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isAdmin();
+    }
+  }
+}
